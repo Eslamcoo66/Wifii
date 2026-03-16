@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>لوحة تحكم الانترنت</title>
+<style>
+body{font-family:Arial;direction:rtl;text-align:center;background:#f0f2f5;padding:20px;}
+.box{background:white;padding:20px;border-radius:10px;max-width:700px;margin:auto;box-shadow:0 0 10px rgba(0,0,0,0.1);}
+input{padding:10px;margin:5px;width:150px;}
+button{padding:8px 15px;border:none;background:#007bff;color:white;border-radius:5px;cursor:pointer;}
+.delete{background:red;}
+table{width:100%;margin-top:20px;border-collapse:collapse;}
+td,th{padding:10px;border-bottom:1px solid #ddd;}
+</style>
+</head>
+<body>
+
+<div class="box" id="loginBox">
+<h2>دخول الماستر</h2>
+<input type="password" id="masterPass" placeholder="كلمة السر">
+<br>
+<button id="loginBtn">دخول</button>
+</div>
+
+<div class="box" id="controlBox" style="display:none;">
+<h2>لوحة التحكم</h2>
+<input id="name" placeholder="اسم الجهاز">
+<input id="gb" placeholder="عدد الجيجات">
+<button onclick="addDevice()">اضافة جهاز</button>
+
+<table>
+<thead>
+<tr><th>الجهاز</th><th>الجيجات</th><th>تحكم</th></tr>
+</thead>
+<tbody id="devices"></tbody>
+</table>
+</div>
+
+<!-- Firebase 8.10.1 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+window.onload = function(){
+
+// --- Firebase Config ---
+var firebaseConfig = {
+  apiKey: "AIzaSyC8dNt9ubUzvFRa2NYzh0ov62WmBzv0AWc",
+  authDomain: "gharaqa-ramadan.firebaseapp.com",
+  databaseURL: "https://gharaqa-ramadan-default-rtdb.firebaseio.com",
+  projectId: "gharaqa-ramadan",
+  storageBucket: "gharaqa-ramadan.firebasestorage.app",
+  messagingSenderId: "519550312575",
+  appId: "1:519550312575:web:9ea074b1c882b4a6ff1f4a"
+};
+firebase.initializeApp(firebaseConfig);
+
+var db = firebase.database();
+var devicesRef = db.ref("wifi_devices");
+
+// كلمة السر للماستر
+var MASTER_PASSWORD = "1234";
+
+// --- تسجيل دخول الماستر ---
+document.getElementById("loginBtn").addEventListener("click", function(){
+  var pass = document.getElementById("masterPass").value;
+  if(pass === MASTER_PASSWORD){
+    document.getElementById("loginBox").style.display="none";
+    document.getElementById("controlBox").style.display="block";
+    renderDevices();
+  } else {
+    alert("كلمة السر غلط");
+  }
+});
+
+// --- إضافة جهاز ---
+window.addDevice = function(){
+  var name = document.getElementById("name").value;
+  var gb = document.getElementById("gb").value;
+  if(!name || !gb){ alert("ادخل البيانات"); return; }
+  devicesRef.push({name:name, gb:gb});
+  document.getElementById("name").value="";
+  document.getElementById("gb").value="";
+}
+
+// --- حذف جهاز ---
+window.removeDevice = function(id){
+  devicesRef.child(id).remove();
+}
+
+// --- عرض الأجهزة مع التحديث المباشر ---
+function renderDevices(){
+  devicesRef.on("value", function(snapshot){
+    var data = snapshot.val();
+    var html = "";
+    for(var id in data){
+      html += "<tr>"+
+        "<td>"+data[id].name+"</td>"+
+        "<td>"+data[id].gb+" GB</td>"+
+        "<td><button onclick=\"removeDevice('"+id+"')\" class='delete'>حذف</button></td>"+
+        "</tr>";
+    }
+    document.getElementById("devices").innerHTML = html;
+  });
+}
+
+}
+</script>
+
+</body>
+</html>
